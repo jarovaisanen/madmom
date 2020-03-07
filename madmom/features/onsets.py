@@ -15,7 +15,7 @@ from scipy.ndimage.filters import maximum_filter, minimum_filter
 
 from ..audio.signal import smooth as smooth_signal
 from ..processors import (BufferProcessor, OnlineProcessor, ParallelProcessor,
-                          Processor, SequentialProcessor, )
+                          Processor, SequentialProcessor)
 from ..utils import combine_events
 
 EPSILON = np.spacing(1)
@@ -1257,6 +1257,14 @@ class OnsetPeakPickingProcessor(OnlineProcessor):
 
 ###############################################################################
 
+# must be a top-level function to be pickle-able
+def _cnn_drum_onset_processor_pad(data):
+    """Pad the data by repeating the first and last frame 7 times."""
+    pad_start = np.repeat(data[:1], 7, axis=0)
+    pad_stop = np.repeat(data[-1:], 7, axis=0)
+    return np.concatenate((pad_start, data, pad_stop))
+
+
 # This processor belongs to Jaro's gradu.
 class CNNDrumOnsetProcessor(SequentialProcessor):
     """
@@ -1306,7 +1314,7 @@ class CNNDrumOnsetProcessor(SequentialProcessor):
             multi.append(SequentialProcessor((frames, stft, filt, spec)))
         # stack the features (in depth) and pad at beginning and end
         stack = np.dstack
-        pad = _cnn_onset_processor_pad
+        pad = _cnn_drum_onset_processor_pad
         # pre-processes everything sequentially
         pre_processor = SequentialProcessor((sig, multi, stack, pad))
 

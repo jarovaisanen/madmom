@@ -13,7 +13,7 @@ from __future__ import absolute_import, division, print_function
 import argparse
 
 from madmom.audio import SignalProcessor
-from madmom.features import (ActivationsProcessor, CNNOnsetProcessor,
+from madmom.features import (ActivationsProcessor, CNNDrumOnsetProcessor,
                              OnsetPeakPickingProcessor)
 from madmom.io import write_onsets
 from madmom.processors import IOProcessor, io_arguments
@@ -31,6 +31,12 @@ def main():
     The implementation follows as closely as possible the original one, but
     part of the signal pre-processing differs in minor aspects, so results can
     differ slightly, too.
+
+    * * * 
+    Input .WAV audio files should be given with relatively low bitrate 
+    (32k works). Higher ones don't seem to work, throws LoadAudioFileError
+    ("try installing ffmpeg"). Sample rate should preferably be 44100 Hz.
+    * * * 
 
     This program can be run in 'single' file mode to process a single audio
     file and write the detected onsets to STDOUT or the given output file.
@@ -51,7 +57,7 @@ def main():
     ''')
     # version
     p.add_argument('--version', action='version',
-                   version='CNNDrumOnsetDetector.2016')
+                   version='CNNDrumOnsetDetector.2020')
     # input/output options
     io_arguments(p, output_suffix='.onsets.txt')
     ActivationsProcessor.add_arguments(p)
@@ -78,7 +84,7 @@ def main():
         in_processor = ActivationsProcessor(mode='r', **vars(args))
     else:
         # use a CNN to predict the drum onsets
-        in_processor = CNNDrumOnsetDetector(**vars(args))
+        in_processor = CNNDrumOnsetProcessor(**vars(args))
 
     # output processor
     if args.save:
