@@ -88,7 +88,7 @@ def main():
 
     # output processor
     if args.save:
-        # save the RNN onset activations to file
+        # save the CNN onset activations to file
         out_processor = ActivationsProcessor(mode='w', **vars(args))
     else:
         # detect the onsets and output them
