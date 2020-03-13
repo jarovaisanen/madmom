@@ -1264,7 +1264,6 @@ def _cnn_drum_onset_processor_pad(data):
     pad_stop = np.repeat(data[-1:], 7, axis=0)
     return np.concatenate((pad_start, data, pad_stop))
 
-
 # This processor belongs to Jaro's gradu.
 class CNNDrumOnsetProcessor(SequentialProcessor):
     """
@@ -1323,3 +1322,183 @@ class CNNDrumOnsetProcessor(SequentialProcessor):
 
         # instantiate a SequentialProcessor
         super(CNNDrumOnsetProcessor, self).__init__((pre_processor, nn))
+
+
+# This processor belongs to Jaro's gradu.
+class CNNBassDrumOnsetProcessor(SequentialProcessor):
+    """
+    Processor to get a bass drum onset activation function from a CNN.
+
+    Notes
+    -----
+    The implementation follows as closely as possible the original one, but
+    part of the signal pre-processing differs in minor aspects, so results can
+    differ slightly, too. Custom parameterized.
+
+    Examples
+    --------
+    Create a CNNBassDrumOnsetProcessor and pass a file through the processor to 
+    obtain an onset detection function (sampled with 100 frames per second).
+
+    >>> proc = CNNBassDrumOnsetProcessor()
+    >>> proc  # doctest: +ELLIPSIS
+    <madmom.features.onsets.CNNBassDrumOnsetProcessor object at 0x...>
+    >>> proc('tests/data/audio/sample.wav')  # doctest: +ELLIPSIS
+    array([0.05369, 0.04205, ... 0.00014], dtype=float32)
+
+    """
+
+    def __init__(self, **kwargs):
+        # pylint: disable=unused-argument
+        from ..audio.signal import SignalProcessor, FramedSignalProcessor
+        from ..audio.stft import ShortTimeFourierTransformProcessor
+        from ..audio.filters import MelFilterbank
+        from ..audio.spectrogram import (FilteredSpectrogramProcessor,
+                                         LogarithmicSpectrogramProcessor)
+        from ..models import ONSETS_CNN
+        from ..ml.nn import NeuralNetwork
+
+        # define pre-processing chain
+        sig = SignalProcessor(num_channels=1, sample_rate=44100)
+        # process the multi-resolution spec in parallel
+        multi = ParallelProcessor([])
+        for frame_size in [2048, 1024, 4096]:
+            frames = FramedSignalProcessor(frame_size=frame_size, fps=100)
+            stft = ShortTimeFourierTransformProcessor()  # caching FFT window
+            filt = FilteredSpectrogramProcessor(
+                filterbank=MelFilterbank, num_bands=80, fmin=27.5, fmax=16000,
+                norm_filters=True, unique_filters=False)
+            spec = LogarithmicSpectrogramProcessor(log=np.log, add=EPSILON)
+            # process each frame size with spec and diff sequentially
+            multi.append(SequentialProcessor((frames, stft, filt, spec)))
+        # stack the features (in depth) and pad at beginning and end
+        stack = np.dstack
+        pad = _cnn_drum_onset_processor_pad
+        # pre-processes everything sequentially
+        pre_processor = SequentialProcessor((sig, multi, stack, pad))
+
+        # process the pre-processed signal with a NN ensemble
+        nn = NeuralNetwork.load(ONSETS_CNN[0])
+
+        # instantiate a SequentialProcessor
+        super(CNNBassDrumOnsetProcessor, self).__init__((pre_processor, nn))
+
+
+# This processor belongs to Jaro's gradu.
+class CNNSnareDrumOnsetProcessor(SequentialProcessor):
+    """
+    Processor to get a snare drum onset activation function from a CNN.
+
+    Notes
+    -----
+    The implementation follows as closely as possible the original one, but
+    part of the signal pre-processing differs in minor aspects, so results can
+    differ slightly, too. Custom parameterized.
+
+    Examples
+    --------
+    Create a CNNSnareDrumOnsetProcessor and pass a file through the processor to 
+    obtain an onset detection function (sampled with 100 frames per second).
+
+    >>> proc = CNNSnareDrumOnsetProcessor()
+    >>> proc  # doctest: +ELLIPSIS
+    <madmom.features.onsets.CNNSnareDrumOnsetProcessor object at 0x...>
+    >>> proc('tests/data/audio/sample.wav')  # doctest: +ELLIPSIS
+    array([0.05369, 0.04205, ... 0.00014], dtype=float32)
+
+    """
+
+    def __init__(self, **kwargs):
+        # pylint: disable=unused-argument
+        from ..audio.signal import SignalProcessor, FramedSignalProcessor
+        from ..audio.stft import ShortTimeFourierTransformProcessor
+        from ..audio.filters import MelFilterbank
+        from ..audio.spectrogram import (FilteredSpectrogramProcessor,
+                                         LogarithmicSpectrogramProcessor)
+        from ..models import ONSETS_CNN
+        from ..ml.nn import NeuralNetwork
+
+        # define pre-processing chain
+        sig = SignalProcessor(num_channels=1, sample_rate=44100)
+        # process the multi-resolution spec in parallel
+        multi = ParallelProcessor([])
+        for frame_size in [2048, 1024, 4096]:
+            frames = FramedSignalProcessor(frame_size=frame_size, fps=100)
+            stft = ShortTimeFourierTransformProcessor()  # caching FFT window
+            filt = FilteredSpectrogramProcessor(
+                filterbank=MelFilterbank, num_bands=80, fmin=27.5, fmax=15000,
+                norm_filters=True, unique_filters=False)
+            spec = LogarithmicSpectrogramProcessor(log=np.log, add=EPSILON)
+            # process each frame size with spec and diff sequentially
+            multi.append(SequentialProcessor((frames, stft, filt, spec)))
+        # stack the features (in depth) and pad at beginning and end
+        stack = np.dstack
+        pad = _cnn_drum_onset_processor_pad
+        # pre-processes everything sequentially
+        pre_processor = SequentialProcessor((sig, multi, stack, pad))
+
+        # process the pre-processed signal with a NN ensemble
+        nn = NeuralNetwork.load(ONSETS_CNN[0])
+
+        # instantiate a SequentialProcessor
+        super(CNNSnareDrumOnsetProcessor, self).__init__((pre_processor, nn))
+
+
+# This processor belongs to Jaro's gradu.
+class CNNHihatOnsetProcessor(SequentialProcessor):
+    """
+    Processor to get a hihat onset activation function from a CNN.
+
+    Notes
+    -----
+    The implementation follows as closely as possible the original one, but
+    part of the signal pre-processing differs in minor aspects, so results can
+    differ slightly, too. Custom parameterized.
+
+    Examples
+    --------
+    Create a CNNHihatOnsetProcessor and pass a file through the processor to 
+    obtain an onset detection function (sampled with 100 frames per second).
+
+    >>> proc = CNNHihatOnsetProcessor()
+    >>> proc  # doctest: +ELLIPSIS
+    <madmom.features.onsets.CNNHihatOnsetProcessor object at 0x...>
+    >>> proc('tests/data/audio/sample.wav')  # doctest: +ELLIPSIS
+    array([0.05369, 0.04205, ... 0.00014], dtype=float32)
+
+    """
+
+    def __init__(self, **kwargs):
+        # pylint: disable=unused-argument
+        from ..audio.signal import SignalProcessor, FramedSignalProcessor
+        from ..audio.stft import ShortTimeFourierTransformProcessor
+        from ..audio.filters import MelFilterbank
+        from ..audio.spectrogram import (FilteredSpectrogramProcessor,
+                                         LogarithmicSpectrogramProcessor)
+        from ..models import ONSETS_CNN
+        from ..ml.nn import NeuralNetwork
+
+        # define pre-processing chain
+        sig = SignalProcessor(num_channels=1, sample_rate=44100)
+        # process the multi-resolution spec in parallel
+        multi = ParallelProcessor([])
+        for frame_size in [2048, 1024, 4096]:
+            frames = FramedSignalProcessor(frame_size=frame_size, fps=100)
+            stft = ShortTimeFourierTransformProcessor()  # caching FFT window
+            filt = FilteredSpectrogramProcessor(
+                filterbank=MelFilterbank, num_bands=80, fmin=27.5, fmax=15000,
+                norm_filters=True, unique_filters=False)
+            spec = LogarithmicSpectrogramProcessor(log=np.log, add=EPSILON)
+            # process each frame size with spec and diff sequentially
+            multi.append(SequentialProcessor((frames, stft, filt, spec)))
+        # stack the features (in depth) and pad at beginning and end
+        stack = np.dstack
+        pad = _cnn_drum_onset_processor_pad
+        # pre-processes everything sequentially
+        pre_processor = SequentialProcessor((sig, multi, stack, pad))
+
+        # process the pre-processed signal with a NN ensemble
+        nn = NeuralNetwork.load(ONSETS_CNN[0])
+
+        # instantiate a SequentialProcessor
+        super(CNNSnareDrumOnsetProcessor, self).__init__((pre_processor, nn))

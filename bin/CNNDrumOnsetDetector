@@ -33,9 +33,10 @@ def main():
     differ slightly, too.
 
     * * * 
-    Input .WAV audio files should be given with relatively low bitrate 
-    (32k works). Higher ones don't seem to work, throws LoadAudioFileError
-    ("try installing ffmpeg"). Sample rate should preferably be 44100 Hz.
+    Input .WAV audio files should be 16 bit, and they should be given with 
+    relatively low bitrate (32k works). Higher ones don't seem to work, 
+    throws LoadAudioFileError ("try installing ffmpeg"). Sample rate should
+    preferably be 44100 Hz.
     * * * 
 
     This program can be run in 'single' file mode to process a single audio
